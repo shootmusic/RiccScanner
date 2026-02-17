@@ -27,20 +27,20 @@
             margin-bottom: 30px;
             font-size: 14px;
         }
-        .api-config {
+        .api-box {
             background: #161b22;
             border: 2px solid #30363d;
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 20px;
         }
-        .api-config label {
+        .api-box label {
             color: #58a6ff;
             font-size: 12px;
             display: block;
             margin-bottom: 5px;
         }
-        .api-config input {
+        .api-box input {
             width: 100%;
             padding: 12px;
             background: #0d1117;
@@ -48,6 +48,7 @@
             color: #c9d1d9;
             border-radius: 8px;
             font-family: Consolas, monospace;
+            font-size: 14px;
         }
         .camera-box {
             background: #161b22;
@@ -136,9 +137,9 @@
         <h1>🔥 RiccScanner v3.0</h1>
         <p class="subtitle">Mr.X System Online | Math OCR Solver</p>
         
-        <div class="api-config">
-            <label>🔗 Backend API URL (Flask server HP lo):</label>
-            <input type="text" id="apiUrl" placeholder="http://192.168.1.100:5000/solve" value="http://localhost:5000/solve">
+        <div class="api-box">
+            <label>🔗 Backend API URL:</label>
+            <input type="text" id="apiUrl" value="https://riccscanner.up.railway.app/solve" readonly>
         </div>
         
         <div class="camera-box">
@@ -164,7 +165,7 @@
         
         <div class="footer">
             RiccScanner v3.0 | Created for RICC | Developed by Mr.X<br>
-            Backend must running on your device
+            Backend: Railway | Frontend: GitHub Pages
         </div>
     </div>
 
@@ -217,10 +218,6 @@
         
         function sendToServer(imageData) {
             const apiUrl = document.getElementById('apiUrl').value.trim();
-            if (!apiUrl) {
-                alert('Masukin backend API URL dulu!');
-                return;
-            }
             
             loading.style.display = 'block';
             status.textContent = 'Status: Processing OCR...';
@@ -243,10 +240,9 @@
             .catch(err => {
                 loading.style.display = 'none';
                 status.textContent = 'Status: Error ❌';
-                alert('Backend gak nyambung!\n\nCek:\n1. Flask server jalan di HP lo\n2. API URL bener\n3. HP lo & server sama WiFi\n\nError: ' + err.message);
+                alert('Backend error!\n\nCek koneksi atau coba lagi.\nError: ' + err.message);
             });
         }
     </script>
 </body>
 </html>
-

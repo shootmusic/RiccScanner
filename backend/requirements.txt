@@ -1,0 +1,7 @@
+flask==3.0.0
+flask-cors==4.0.0
+pillow==10.1.0
+numpy==1.26.0
+opencv-python-headless==4.8.1.78
+pytesseract==0.3.10
+sympy==1.12

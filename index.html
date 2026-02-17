@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiccScanner v3.0 - Mr.X Edition</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0d1117; 
+            color: #c9d1d9; 
+            font-family: 'Segoe UI', Consolas, monospace;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { 
+            color: #f85149; 
+            text-align: center; 
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #f85149;
+            font-size: 28px;
+        }
+        .subtitle { 
+            color: #8b949e; 
+            text-align: center; 
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .api-config {
+            background: #161b22;
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .api-config label {
+            color: #58a6ff;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .api-config input {
+            width: 100%;
+            padding: 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 8px;
+            font-family: Consolas, monospace;
+        }
+        .camera-box {
+            background: #161b22;
+            border: 2px solid #30363d;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        video, #preview {
+            width: 100%;
+            border-radius: 12px;
+            background: #010409;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-scan { 
+            background: linear-gradient(135deg, #f85149, #ff7b72);
+            color: white;
+        }
+        .btn-scan:hover { transform: scale(1.02); box-shadow: 0 0 20px #f85149; }
+        .btn-file {
+            background: #238636;
+            color: white;
+            display: block;
+            text-align: center;
+        }
+        .btn-file:hover { background: #2ea043; }
+        .result-box {
+            background: #161b22;
+            border: 2px solid #30363d;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        .result-box h2 { color: #58a6ff; margin-bottom: 15px; font-size: 20px; }
+        .result-text {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: Consolas, monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 14px;
+            color: #c9d1d9;
+            border-left: 3px solid #58a6ff;
+        }
+        .loading {
+            color: #58a6ff;
+            text-align: center;
+            display: none;
+            padding: 20px;
+            font-size: 16px;
+        }
+        input[type="file"] { display: none; }
+        .status {
+            text-align: center;
+            color: #8b949e;
+            font-size: 12px;
+            margin-top: 10px;
+            font-family: Consolas, monospace;
+        }
+        .footer {
+            text-align: center;
+            color: #484f58;
+            font-size: 11px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #30363d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 RiccScanner v3.0</h1>
+        <p class="subtitle">Mr.X System Online | Math OCR Solver</p>
+        
+        <div class="api-config">
+            <label>🔗 Backend API URL (Flask server HP lo):</label>
+            <input type="text" id="apiUrl" placeholder="http://192.168.1.100:5000/solve" value="http://localhost:5000/solve">
+        </div>
+        
+        <div class="camera-box">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <img id="preview" style="display:none;">
+            
+            <button class="btn btn-scan" onclick="scan()">📸 SCAN SOAL</button>
+            
+            <label class="btn btn-file">
+                📁 PILIH GAMBAR DARI GALLERY
+                <input type="file" id="fileInput" accept="image/*" onchange="loadFile(event)">
+            </label>
+            
+            <p class="loading" id="loading">🧠 Processing OCR...</p>
+            <p class="status" id="status">Status: Ready | Kamera: Loading...</p>
+        </div>
+        
+        <div class="result-box" id="resultBox">
+            <h2>🧠 HASIL ANALISIS</h2>
+            <div class="result-text" id="result"></div>
+        </div>
+        
+        <div class="footer">
+            RiccScanner v3.0 | Created for RICC | Developed by Mr.X<br>
+            Backend must running on your device
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const preview = document.getElementById('preview');
+        const loading = document.getElementById('loading');
+        const status = document.getElementById('status');
+        
+        // Akses kamera belakang HP
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            } 
+        })
+        .then(stream => {
+            video.srcObject = stream;
+            status.textContent = 'Status: Ready | Kamera: Aktif ✅';
+        })
+        .catch(err => {
+            status.textContent = 'Status: Kamera error - ' + err.message;
+            video.style.display = 'none';
+        });
+        
+        function scan() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const imageData = canvas.toDataURL('image/jpeg', 0.9);
+            sendToServer(imageData);
+        }
+        
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = e => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                video.style.display = 'none';
+                sendToServer(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function sendToServer(imageData) {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            if (!apiUrl) {
+                alert('Masukin backend API URL dulu!');
+                return;
+            }
+            
+            loading.style.display = 'block';
+            status.textContent = 'Status: Processing OCR...';
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({image: imageData})
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                loading.style.display = 'none';
+                document.getElementById('resultBox').style.display = 'block';
+                document.getElementById('result').textContent = data.result;
+                status.textContent = 'Status: Complete ✅';
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                status.textContent = 'Status: Error ❌';
+                alert('Backend gak nyambung!\n\nCek:\n1. Flask server jalan di HP lo\n2. API URL bener\n3. HP lo & server sama WiFi\n\nError: ' + err.message);
+            });
+        }
+    </script>
+</body>
+</html>
+

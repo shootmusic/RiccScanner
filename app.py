@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 """
-RiccScanner Backend - DeepSeek Vision Edition
-OCR akurat pakai DeepSeek AI
+RiccScanner Backend - OpenAI GPT-4 Vision Edition
 """
 
 import os
 import io
 import base64
-import re
 import requests
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
-from PIL import Image
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-DEEPSEEK_API_KEY = "sk-2720b10f2a434783ba26675ecd73fbb0"
-DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
+# Ambil dari environment variable
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 
 HTML_FRONTEND = '''
 <!DOCTYPE html>
@@ -139,7 +137,7 @@ HTML_FRONTEND = '''
 <body>
     <div class="container">
         <h1>RiccScanner</h1>
-        <p class="subtitle">Math OCR Solver - Powered by DeepSeek AI</p>
+        <p class="subtitle">Math OCR Solver - Powered by GPT-4 Vision</p>
         
         <div class="camera-box">
             <video id="video" autoplay playsinline></video>
@@ -153,7 +151,7 @@ HTML_FRONTEND = '''
                 <input type="file" id="fileInput" accept="image/*" onchange="loadFile(event)">
             </label>
             
-            <p class="loading" id="loading">Processing with DeepSeek AI...</p>
+            <p class="loading" id="loading">Processing with GPT-4 Vision...</p>
             <p class="status" id="status">Status: Ready | Kamera: Loading...</p>
         </div>
         
@@ -163,7 +161,7 @@ HTML_FRONTEND = '''
         </div>
         
         <div class="footer">
-            RiccScanner | Powered by DeepSeek Vision API
+            RiccScanner | Powered by OpenAI GPT-4 Vision
         </div>
     </div>
 
@@ -248,7 +246,6 @@ def solve_math(expression):
     try:
         import sympy as sp
         
-        # Bersihin ekspresi
         expr = expression.replace('×', '*').replace('÷', '/').replace('^', '**')
         expr = expr.replace(' ', '')
         
@@ -267,19 +264,21 @@ def solve_math(expression):
     except Exception as e:
         return f"Ekspresi: {expression}\nError: {str(e)}"
 
-def deepseek_ocr(image_base64):
-    """OCR pakai DeepSeek Vision"""
+def gpt4_vision_ocr(image_base64):
+    """OCR pakai GPT-4 Vision"""
+    if not OPENAI_API_KEY:
+        return "ERROR: API key not configured"
+    
     headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json"
     }
     
-    # Hapus header data URI
     if ',' in image_base64:
         image_base64 = image_base64.split(',')[1]
     
     payload = {
-        "model": "deepseek-chat",
+        "model": "gpt-4o",
         "messages": [
             {
                 "role": "user",
@@ -301,21 +300,20 @@ def deepseek_ocr(image_base64):
     }
     
     try:
-        response = requests.post(DEEPSEEK_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(OPENAI_URL, headers=headers, json=payload, timeout=30)
         result = response.json()
         
         if 'choices' in result and len(result['choices']) > 0:
             text = result['choices'][0]['message']['content'].strip()
             return text
         else:
-            return "ERROR: " + str(result)
+            return "ERROR: " + str(result.get('error', result))
             
     except Exception as e:
         return f"ERROR: {str(e)}"
 
 @app.route('/')
 def index():
-    """Serve frontend"""
     return render_template_string(HTML_FRONTEND)
 
 @app.route('/solve', methods=['POST'])
@@ -327,8 +325,7 @@ def solve():
         
         image_data = data['image']
         
-        # OCR pakai DeepSeek
-        detected = deepseek_ocr(image_data)
+        detected = gpt4_vision_ocr(image_data)
         
         if detected == 'NO_MATH':
             return jsonify({
@@ -340,7 +337,6 @@ def solve():
                 'result': f'OCR Error: {detected}\n\nCoba lagi dengan gambar lebih jelas.'
             })
         
-        # Solve matematika
         solution = solve_math(detected)
         
         return jsonify({
@@ -354,5 +350,5 @@ def solve():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f"RiccScanner DeepSeek Edition - Port {port}")
+    print(f"RiccScanner GPT-4 Edition - Port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)

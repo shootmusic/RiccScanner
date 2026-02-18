@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RiccScanner v3.0 - Mr.X Edition</title>
+    <title>RiccScanner - Math OCR Solver</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             background: #0d1117; 
             color: #c9d1d9; 
-            font-family: 'Segoe UI', Consolas, monospace;
+            font-family: 'Segoe UI', Arial, sans-serif;
             padding: 20px;
             min-height: 100vh;
         }
@@ -18,8 +18,8 @@
             color: #f85149; 
             text-align: center; 
             margin-bottom: 10px;
-            text-shadow: 0 0 20px #f85149;
-            font-size: 28px;
+            font-size: 32px;
+            font-weight: bold;
         }
         .subtitle { 
             color: #8b949e; 
@@ -29,8 +29,8 @@
         }
         .api-box {
             background: #161b22;
-            border: 2px solid #30363d;
-            border-radius: 12px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
             padding: 15px;
             margin-bottom: 20px;
         }
@@ -39,27 +39,28 @@
             font-size: 12px;
             display: block;
             margin-bottom: 5px;
+            font-weight: bold;
         }
         .api-box input {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background: #0d1117;
             border: 1px solid #30363d;
             color: #c9d1d9;
-            border-radius: 8px;
-            font-family: Consolas, monospace;
+            border-radius: 6px;
+            font-family: monospace;
             font-size: 14px;
         }
         .camera-box {
             background: #161b22;
-            border: 2px solid #30363d;
-            border-radius: 16px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
         }
         video, #preview {
             width: 100%;
-            border-radius: 12px;
+            border-radius: 8px;
             background: #010409;
             display: block;
             margin-bottom: 15px;
@@ -69,17 +70,17 @@
             padding: 15px;
             margin: 10px 0;
             border: none;
-            border-radius: 12px;
-            font-size: 18px;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
         .btn-scan { 
-            background: linear-gradient(135deg, #f85149, #ff7b72);
+            background: #f85149;
             color: white;
         }
-        .btn-scan:hover { transform: scale(1.02); box-shadow: 0 0 20px #f85149; }
+        .btn-scan:hover { background: #ff7b72; }
         .btn-file {
             background: #238636;
             color: white;
@@ -89,18 +90,23 @@
         .btn-file:hover { background: #2ea043; }
         .result-box {
             background: #161b22;
-            border: 2px solid #30363d;
-            border-radius: 16px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
             padding: 20px;
             margin-top: 20px;
             display: none;
         }
-        .result-box h2 { color: #58a6ff; margin-bottom: 15px; font-size: 20px; }
+        .result-box h2 { 
+            color: #58a6ff; 
+            margin-bottom: 15px; 
+            font-size: 18px;
+            font-weight: bold;
+        }
         .result-text {
             background: #0d1117;
             padding: 15px;
-            border-radius: 8px;
-            font-family: Consolas, monospace;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
             white-space: pre-wrap;
             line-height: 1.6;
             font-size: 14px;
@@ -112,7 +118,7 @@
             text-align: center;
             display: none;
             padding: 20px;
-            font-size: 16px;
+            font-size: 14px;
         }
         input[type="file"] { display: none; }
         .status {
@@ -120,7 +126,7 @@
             color: #8b949e;
             font-size: 12px;
             margin-top: 10px;
-            font-family: Consolas, monospace;
+            font-family: monospace;
         }
         .footer {
             text-align: center;
@@ -134,11 +140,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔥 RiccScanner v3.0</h1>
-        <p class="subtitle">Mr.X System Online | Math OCR Solver</p>
+        <h1>RiccScanner</h1>
+        <p class="subtitle">Math OCR Solver - Scan and Solve Mathematical Expressions</p>
         
         <div class="api-box">
-            <label>🔗 Backend API URL:</label>
+            <label>Backend API URL:</label>
             <input type="text" id="apiUrl" value="https://riccscanner.up.railway.app/solve" readonly>
         </div>
         
@@ -147,24 +153,24 @@
             <canvas id="canvas" style="display:none;"></canvas>
             <img id="preview" style="display:none;">
             
-            <button class="btn btn-scan" onclick="scan()">📸 SCAN SOAL</button>
+            <button class="btn btn-scan" onclick="scan()">SCAN SOAL</button>
             
             <label class="btn btn-file">
-                📁 PILIH GAMBAR DARI GALLERY
+                PILIH GAMBAR DARI GALLERY
                 <input type="file" id="fileInput" accept="image/*" onchange="loadFile(event)">
             </label>
             
-            <p class="loading" id="loading">🧠 Processing OCR...</p>
+            <p class="loading" id="loading">Processing OCR...</p>
             <p class="status" id="status">Status: Ready | Kamera: Loading...</p>
         </div>
         
         <div class="result-box" id="resultBox">
-            <h2>🧠 HASIL ANALISIS</h2>
+            <h2>HASIL ANALISIS</h2>
             <div class="result-text" id="result"></div>
         </div>
         
         <div class="footer">
-            RiccScanner v3.0 | Created for RICC | Developed by Mr.X<br>
+            RiccScanner | Math OCR Solver<br>
             Backend: Railway | Frontend: GitHub Pages
         </div>
     </div>
@@ -176,7 +182,6 @@
         const loading = document.getElementById('loading');
         const status = document.getElementById('status');
         
-        // Akses kamera belakang HP
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: 'environment',
@@ -186,7 +191,7 @@
         })
         .then(stream => {
             video.srcObject = stream;
-            status.textContent = 'Status: Ready | Kamera: Aktif ✅';
+            status.textContent = 'Status: Ready | Kamera: Aktif';
         })
         .catch(err => {
             status.textContent = 'Status: Kamera error - ' + err.message;
@@ -235,12 +240,12 @@
                 loading.style.display = 'none';
                 document.getElementById('resultBox').style.display = 'block';
                 document.getElementById('result').textContent = data.result;
-                status.textContent = 'Status: Complete ✅';
+                status.textContent = 'Status: Complete';
             })
             .catch(err => {
                 loading.style.display = 'none';
-                status.textContent = 'Status: Error ❌';
-                alert('Backend error!\n\nCek koneksi atau coba lagi.\nError: ' + err.message);
+                status.textContent = 'Status: Error';
+                alert('Backend error: ' + err.message);
             });
         }
     </script>

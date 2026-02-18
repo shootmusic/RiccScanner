@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RiccScanner Backend - OpenAI GPT-4 Vision Edition
+RiccScanner Backend - Google Gemini Vision Edition
 """
 
 import os
@@ -13,9 +13,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Ambil dari environment variable
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
-OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 HTML_FRONTEND = '''
 <!DOCTYPE html>
@@ -137,7 +136,7 @@ HTML_FRONTEND = '''
 <body>
     <div class="container">
         <h1>RiccScanner</h1>
-        <p class="subtitle">Math OCR Solver - Powered by GPT-4 Vision</p>
+        <p class="subtitle">Math OCR Solver - Powered by Google Gemini</p>
         
         <div class="camera-box">
             <video id="video" autoplay playsinline></video>
@@ -151,7 +150,7 @@ HTML_FRONTEND = '''
                 <input type="file" id="fileInput" accept="image/*" onchange="loadFile(event)">
             </label>
             
-            <p class="loading" id="loading">Processing with GPT-4 Vision...</p>
+            <p class="loading" id="loading">Processing with Gemini Vision...</p>
             <p class="status" id="status">Status: Ready | Kamera: Loading...</p>
         </div>
         
@@ -161,7 +160,7 @@ HTML_FRONTEND = '''
         </div>
         
         <div class="footer">
-            RiccScanner | Powered by OpenAI GPT-4 Vision
+            RiccScanner | Powered by Google Gemini Vision
         </div>
     </div>
 
@@ -264,50 +263,44 @@ def solve_math(expression):
     except Exception as e:
         return f"Ekspresi: {expression}\nError: {str(e)}"
 
-def gpt4_vision_ocr(image_base64):
-    """OCR pakai GPT-4 Vision"""
-    if not OPENAI_API_KEY:
+def gemini_vision_ocr(image_base64):
+    """OCR pakai Google Gemini"""
+    if not GEMINI_API_KEY:
         return "ERROR: API key not configured"
     
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
+    # Hapus header data URI
     if ',' in image_base64:
         image_base64 = image_base64.split(',')[1]
     
     payload = {
-        "model": "gpt-4o",
-        "messages": [
+        "contents": [
             {
-                "role": "user",
-                "content": [
+                "parts": [
                     {
-                        "type": "text",
                         "text": "Baca soal matematika di gambar ini. Tulis HANYA ekspresi matematikanya saja, tanpa penjelasan. Contoh: 50+100*2000 atau 5*x+10=20. Jika tidak ada soal matematika, tulis 'NO_MATH'."
                     },
                     {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{image_base64}"
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": image_base64
                         }
                     }
                 ]
             }
-        ],
-        "max_tokens": 100
+        ]
     }
     
     try:
-        response = requests.post(OPENAI_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(GEMINI_URL, json=payload, timeout=30)
         result = response.json()
         
-        if 'choices' in result and len(result['choices']) > 0:
-            text = result['choices'][0]['message']['content'].strip()
+        if 'candidates' in result and len(result['candidates']) > 0:
+            text = result['candidates'][0]['content']['parts'][0]['text'].strip()
             return text
+        elif 'error' in result:
+            return f"ERROR: {result['error'].get('message', str(result))}"
         else:
-            return "ERROR: " + str(result.get('error', result))
+            return f"ERROR: Unexpected response - {str(result)}"
             
     except Exception as e:
         return f"ERROR: {str(e)}"
@@ -325,7 +318,7 @@ def solve():
         
         image_data = data['image']
         
-        detected = gpt4_vision_ocr(image_data)
+        detected = gemini_vision_ocr(image_data)
         
         if detected == 'NO_MATH':
             return jsonify({
@@ -350,5 +343,5 @@ def solve():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f"RiccScanner GPT-4 Edition - Port {port}")
+    print(f"RiccScanner Gemini Edition - Port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
